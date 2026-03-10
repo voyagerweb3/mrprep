@@ -1,22 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
-
 from app.database import engine, Base
 from app.routers import checklist, users
 
 Base.metadata.create_all(bind=engine)
 
-@app.on_event("startup")
-async def auto_seed_on_startup():
-    """Auto-seed database on startup if empty (SQLite resets on each Railway deploy)"""
+# Auto-seed on startup using a background thread (non-blocking)
+import threading
+def _seed_if_empty():
     try:
         from app.database import SessionLocal
         from app.models.models import Category
         db = SessionLocal()
         try:
-            count = db.query(Category).count()
-            if count == 0:
+            if db.query(Category).count() == 0:
                 import subprocess, sys
                 subprocess.run([sys.executable, "/app/seed_data.py"], capture_output=True, cwd="/app")
         finally:
@@ -24,21 +22,10 @@ async def auto_seed_on_startup():
     except Exception:
         pass
 
+threading.Thread(target=_seed_if_empty, daemon=True).start()
 
-app = FastAPI(
-    title="Survival Checklist API",
-    description="API для Telegram Mini App",
-    version="1.0.0",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+app = FastAPI(title="Survival Checklist API", description="API для Telegram Mini App", version="1.0.0")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(checklist.router)
 app.include_router(users.router)
 
@@ -47,4 +34,3 @@ def root(): return {"status": "ok"}
 
 @app.get("/health")
 def health(): return {"status": "healthy"}
-
