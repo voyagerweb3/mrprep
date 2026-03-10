@@ -8,6 +8,9 @@ export default function HomePage() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showPets, setShowPets] = useState(() => {
+    try { return localStorage.getItem('mrprep_show_pets') !== 'false' } catch { return true }
+  })
 
   const telegramId = getTelegramId() || 99999
 
@@ -30,6 +33,12 @@ export default function HomePage() {
     }
   }
 
+  const handleTogglePets = () => {
+    const next = !showPets
+    setShowPets(next)
+    try { localStorage.setItem('mrprep_show_pets', String(next)) } catch {}
+  }
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -47,7 +56,11 @@ export default function HomePage() {
     load()
   }, [telegramId])
 
-  const allItems = categories.flatMap(c => c.items || [])
+  const visibleCategories = showPets
+    ? categories
+    : categories.filter(cat => cat.slug !== 'pets')
+
+  const allItems = visibleCategories.flatMap(c => c.items || [])
   const totalItems = allItems.length
   const checkedItems = allItems.filter(i => i.is_checked).length
   const progress = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0
@@ -94,8 +107,31 @@ export default function HomePage() {
         </div>
       </div>
 
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px', padding:'10px 12px', background:'var(--tg-theme-secondary-bg-color, #f5f5f5)', borderRadius:'8px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+          <span style={{ fontSize:'18px' }}>🐾</span>
+          <span style={{ fontSize:'13px', color:'var(--tg-theme-text-color, #333)' }}>Есть питомцы</span>
+        </div>
+        <button
+          onClick={handleTogglePets}
+          style={{
+            width:'44px', height:'24px', borderRadius:'12px', border:'none', cursor:'pointer',
+            background: showPets ? '#22c55e' : 'var(--tg-theme-hint-color, #ccc)',
+            position:'relative', transition:'background 0.2s', flexShrink:0
+          }}
+        >
+          <div style={{
+            position:'absolute', top:'3px',
+            left: showPets ? '23px' : '3px',
+            width:'18px', height:'18px', borderRadius:'50%',
+            background:'white', transition:'left 0.2s',
+            boxShadow:'0 1px 3px rgba(0,0,0,0.2)'
+          }} />
+        </button>
+      </div>
+
       <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-        {categories.map(cat => (
+        {visibleCategories.map(cat => (
           <CategoryCard key={cat.id} category={cat} onToggle={handleToggle} />
         ))}
       </div>
