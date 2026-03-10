@@ -9,6 +9,17 @@ export default function HomePage() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const OPTIONAL_SLUGS = ['pets']
+  const [showPets, setShowPets] = useState(() => {
+    try { return localStorage.getItem('mrprep_show_pets') === 'true' } catch { return false }
+  })
+  const togglePets = () => {
+    const next = !showPets
+    setShowPets(next)
+    try { localStorage.setItem('mrprep_show_pets', String(next)) } catch {}
+  }
+  const visibleCategories = categories.filter(c => !OPTIONAL_SLUGS.includes(c.slug))
+  const petsCategory = categories.find(c => c.slug === 'pets')
 
   const telegramId = getTelegramId()
 
@@ -60,7 +71,30 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-gray-700">{level.emoji} {level.label}</span>
             <span className="text-lg font-bold text-gray-900">{totalPercent}%</span>
-          </div>
+    
+          {petsCategory && (
+            <div style={{marginTop: '12px'}}>
+              <button
+                onClick={togglePets}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  width: '100%', padding: '12px 16px', borderRadius: '12px',
+                  border: '1.5px dashed var(--tg-theme-hint-color, #aaa)',
+                  background: showPets ? 'var(--tg-theme-secondary-bg-color, #f0f0f0)' : 'transparent',
+                  color: 'var(--tg-theme-text-color, #333)',
+                  cursor: 'pointer', fontSize: '15px', fontWeight: '500'
+                }}
+              >
+                <span style={{fontSize:'20px'}}>🐾</span>
+                <span style={{flex:1, textAlign:'left'}}>Питомцы</span>
+                <span style={{fontSize:'12px', opacity:0.6}}>{showPets ? '✓ включено' : '+ добавить'}</span>
+              </button>
+              {showPets && (
+                <CategoryCard key={petsCategory.id} category={petsCategory} onToggleItem={handleToggle} />
+              )}
+            </div>
+          )}
+      </div>
           <ProgressBar percent={totalPercent} />
           <p className="text-xs text-gray-400 mt-2 text-right">Отмечено {totalChecked} из {totalItems} пунктов</p>
         </div>
@@ -70,7 +104,7 @@ export default function HomePage() {
         <span><span className="inline-block w-2 h-3 bg-yellow-400 rounded mr-1 align-middle" />Средний</span>
       </div>
       <div className="px-4">
-        {categories.map(cat => (
+        {visibleCategories.map(cat => (
           <CategoryCard key={cat.id} category={cat} onToggleItem={handleToggle} />
         ))}
       </div>
