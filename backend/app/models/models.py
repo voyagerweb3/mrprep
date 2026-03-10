@@ -10,7 +10,7 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     slug = Column(String, unique=True, index=True)   # "water", "documents", ...
-    title = Column(String, nullable=False)            # "💧 Вода и еда�
+    title = Column(String, nullable=False)            # "💧 Вода и еда"
     description = Column(Text, nullable=True)
     icon = Column(String, nullable=True)              # emoji
     order = Column(Integer, default=0)
@@ -19,14 +19,14 @@ class Category(Base):
 
 
 class ChecklistItem(Base):
-    """Пункт чеклиста�""
+    """Пункт чеклиста"""
     __tablename__ = "checklist_items"
 
     id = Column(Integer, primary_key=True, index=True)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)   # совет / инструкция
-    quantity = Column(String, nullable=True)     # "3 литра на человека в день�
+    quantity = Column(String, nullable=True)     # "3 литра на человека в день"
     priority = Column(Integer, default=1)        # 1=высокий, 2=средний, 3=низкий
     order = Column(Integer, default=0)
 
@@ -47,7 +47,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     last_seen = Column(DateTime, default=datetime.utcnow)
 
-    user_items = relationship("UserItem", back_populates="user_items")
+    user_items = relationship("UserItem", back_populates="user")
 
 
 class UserItem(Base):
