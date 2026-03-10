@@ -7,6 +7,24 @@ from app.routers import checklist, users
 
 Base.metadata.create_all(bind=engine)
 
+@app.on_event("startup")
+async def auto_seed_on_startup():
+    """Auto-seed database on startup if empty (SQLite resets on each Railway deploy)"""
+    try:
+        from app.database import SessionLocal
+        from app.models.models import Category
+        db = SessionLocal()
+        try:
+            count = db.query(Category).count()
+            if count == 0:
+                import subprocess, sys
+                subprocess.run([sys.executable, "/app/seed_data.py"], capture_output=True, cwd="/app")
+        finally:
+            db.close()
+    except Exception:
+        pass
+
+
 app = FastAPI(
     title="Survival Checklist API",
     description="API для Telegram Mini App",
