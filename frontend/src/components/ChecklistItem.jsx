@@ -1,5 +1,39 @@
 import { useState } from 'react'
 
+// Звук при чеке — Web Audio API
+function playCheckSound(checking) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain); gain.connect(ctx.destination)
+    osc.type = 'sine'
+    if (checking) {
+      osc.frequency.setValueAtTime(600, ctx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.07)
+    } else {
+      osc.frequency.setValueAtTime(500, ctx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(280, ctx.currentTime + 0.07)
+    }
+    gain.gain.setValueAtTime(0.07, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1)
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12)
+  } catch (e) {}
+}
+
+// Вибрация через Telegram HapticFeedback
+function triggerHaptic(checking) {
+  try {
+    const tg = window.Telegram?.WebApp
+    if (tg?.HapticFeedback) {
+      checking
+        ? tg.HapticFeedback.impactOccurred('light')
+        : tg.HapticFeedback.impactOccurred('soft')
+    }
+  } catch (e) {}
+}
+
+
 const PRIORITY_COLORS = {
   1: 'border-l-red-500',
   2: 'border-l-yellow-400',
@@ -12,6 +46,12 @@ const PRIORITY_COLORS = {
 export default function ChecklistItem({ item, onToggle }) {
   const [expanded, setExpanded] = useState(false)
 
+  const handleToggle = () => {
+    playCheckSound(!item.is_checked)
+    triggerHaptic(!item.is_checked)
+    onToggle(item.id)
+  }
+
   return (
     <div
       className={`checklist-item border-l-4 ${PRIORITY_COLORS[item.priority] || 'border-l-gray-300'}
@@ -21,7 +61,7 @@ export default function ChecklistItem({ item, onToggle }) {
       <div className="flex items-start gap-3 p-3">
         {/* Чекбокс */}
         <button
-          onClick={() => onToggle(item.id)}
+          onClick={handleToggle}
           className={`flex-shrink-0 w-6 h-6 mt-0.5 rounded-full border-2 flex items-center justify-center transition-all
             ${item.is_checked
               ? 'bg-green-500 border-green-500 text-white'
