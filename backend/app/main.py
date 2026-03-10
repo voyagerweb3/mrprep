@@ -48,10 +48,3 @@ def root(): return {"status": "ok"}
 @app.get("/health")
 def health(): return {"status": "healthy"}
 
-
-
-@app.post("/api/admin/seed")
-def run_seed():
-    import subprocess, sys
-    result = subprocess.run([sys.executable, "/app/seed_data.py"], capture_output=True, text=True, cwd="/app")
-    return {"stdout": result.stdout, "stderr": result.stderr, "returncode": result.returncode}
