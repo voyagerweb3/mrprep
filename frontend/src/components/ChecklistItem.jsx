@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Звук при чеке — Web Audio API
 function playCheckSound(checking) {
@@ -45,10 +45,14 @@ const PRIORITY_COLORS = {
  */
 export default function ChecklistItem({ item, onToggle }) {
   const [expanded, setExpanded] = useState(false)
+  const [localChecked, setLocalChecked] = useState(localChecked)
+  useEffect(() => { setLocalChecked(localChecked) }, [localChecked])
 
   const handleToggle = () => {
-    playCheckSound(!item.is_checked)
-    triggerHaptic(!item.is_checked)
+    const next = !localChecked
+    setLocalChecked(next)
+    playCheckSound(next)
+    triggerHaptic(next)
     onToggle(item.id)
   }
 
@@ -63,12 +67,12 @@ export default function ChecklistItem({ item, onToggle }) {
         <button
           onClick={handleToggle}
           className={`flex-shrink-0 w-6 h-6 mt-0.5 rounded-full border-2 flex items-center justify-center transition-all
-            ${item.is_checked
+            ${localChecked
               ? 'bg-green-500 border-green-500 text-white'
               : 'border-gray-300 hover:border-green-400'
             }`}
         >
-          {item.is_checked && (
+          {localChecked && (
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
@@ -77,7 +81,7 @@ export default function ChecklistItem({ item, onToggle }) {
 
         {/* Текст */}
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium leading-snug ${item.is_checked ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+          <p className={`text-sm font-medium leading-snug ${localChecked ? 'line-through text-gray-400' : 'text-gray-800'}`}>
             {item.title}
           </p>
           {item.quantity && (
